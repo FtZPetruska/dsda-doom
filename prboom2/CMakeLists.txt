@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.15...4.0)
 
 option(WITH_FLUIDSYNTH "Use FluidSynth if available" ON)
 if(WITH_FLUIDSYNTH)
@@ -54,9 +54,7 @@ check_big_endian(WORDS_BIGENDIAN)
 
 include(GNUInstallDirs)
 
-if(POLICY CMP0099)
-  cmake_policy(SET CMP0099 NEW)
-else()
+if(NOT POLICY CMP0099)
   message(WARNING "Your version of CMake is very old. This may cause linking issues if your dependencies are not in your compiler's default search paths.")
 endif()
 
@@ -64,10 +62,6 @@ option(CMAKE_FIND_PACKAGE_PREFER_CONFIG "Search for package config before using 
 
 if(VCPKG_TOOLCHAIN)
     set(ENV{PKG_CONFIG_PATH} "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/pkgconfig")
-endif()
-
-if(POLICY CMP0069)
-    cmake_policy(SET CMP0069 NEW)
 endif()
 
 include(CheckIPOSupported)
