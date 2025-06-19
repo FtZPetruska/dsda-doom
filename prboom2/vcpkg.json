@@ -7,32 +7,21 @@
   "dependencies": [
     {
       "name": "libzip",
-      "default-features": false,
-      "features": [
-        "bzip2",
-        "liblzma"
-      ]
+      "default-features": false
     },
     "sdl2",
     {
       "name": "sdl2-mixer",
+      "default-features": false,
       "features": [
         "fluidsynth",
-        "libflac",
         "libmodplug",
-        "mpg123",
-        "opusfile"
+        "mpg123"
       ]
     },
     "zlib"
   ],
   "features": {
-    "libopenmpt": {
-      "description": "Build with libopenmpt support",
-      "dependencies": [
-        "libopenmpt"
-      ]
-    },
     "fluidsynth": {
       "description": "Build with FluidSynth support",
       "dependencies": [
@@ -46,6 +35,12 @@
       "description": "Build with libmad support",
       "dependencies": [
         "libmad"
+      ]
+    },
+    "libopenmpt": {
+      "description": "Build with libopenmpt support",
+      "dependencies": [
+        "libopenmpt"
       ]
     },
     "libvorbis": {
@@ -63,7 +58,13 @@
     "sdl2-image": {
       "description": "Build with SDL2_image support",
       "dependencies": [
-        "sdl2-image"
+        {
+          "name": "sdl2-image",
+          "default-features": false,
+          "features": [
+            "libjpeg-turbo"
+          ]
+        }
       ]
     }
   }
