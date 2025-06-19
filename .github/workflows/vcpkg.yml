@@ -1,0 +1,140 @@
+name: vcpkg builds
+
+on: [push, pull_request]
+
+env:
+  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg_cache,readwrite"
+
+jobs:
+  build:
+    name: vcpkg - ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "MSVC x64"
+            os: windows-latest
+            package_name: vcpkg_msvc_x64
+            target_triplet: x64-windows-static-release
+            host_triplet: x64-windows-static-release
+            cmake_args: >-
+              -A x64
+              -D 'CMAKE_MSVC_RUNTIME_LIBRARY:STRING=MultiThreaded$<$<CONFIG:Debug>:Debug>'
+
+          - name: "MSVC arm64"
+            os: windows-latest
+            package_name: vcpkg_msvc_arm64
+            target_triplet: arm64-windows-static-release
+            host_triplet: x64-windows-static-release
+            cmake_args: >-
+              -A ARM64
+              -D 'CMAKE_MSVC_RUNTIME_LIBRARY:STRING=MultiThreaded$<$<CONFIG:Debug>:Debug>'
+
+          - name: "macOS x64"
+            os: macos-latest
+            package_name: vcpkg_mac_x64
+            target_triplet: x64-osx-release
+            host_triplet: arm64-osx-release
+            cmake_args: >-
+              -D "CMAKE_OSX_ARCHITECTURES:STRING=x86_64"
+              -D "CMAKE_SYSTEM_PROCESSOR:STRING=x86_64"
+
+          - name: "macOS arm64"
+            os: macos-latest
+            package_name: vcpkg_mac_arm64
+            target_triplet: arm64-osx-release
+            host_triplet: arm64-osx-release
+
+          - name: "Linux x64"
+            os: ubuntu-latest
+            package_name: vcpkg_linux_x64
+            target_triplet: x64-linux-release
+            host_triplet: x64-linux-release
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: vcpkg - Generate cache key
+        run: echo "CACHE_KEY=vcpkg-${{ matrix.config.target_triplet }}-${{ hashFiles('prboom2/vcpkg.json') }}" >> "$GITHUB_ENV"
+
+      - name: vcpkg - Restore cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: ${{ env.CACHE_KEY }}
+          restore-keys: vcpkg-${{ matrix.config.target_triplet }}
+
+      - name: Linux - Setup dependencies
+        if: ${{ matrix.config.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get upgrade -y
+          sudo apt-get install -y \
+            libgl-dev \
+            libglu1-mesa-dev \
+            libltdl-dev \
+            libx11-dev \
+            libxft-dev \
+            libxext-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            libegl1-mesa-dev
+
+      - name: CMake - Configure
+        run: >-
+          cmake
+          -S prboom2
+          -B build
+          -D CMAKE_BUILD_TYPE:STRING=Release
+          -D "CMAKE_TOOLCHAIN_FILE:FILEPATH=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -D "VCPKG_TARGET_TRIPLET:STRING=${{ matrix.config.target_triplet }}"
+          -D "VCPKG_HOST_TRIPLET:STRING=${{ matrix.config.host_triplet }}"
+          ${{ matrix.config.cmake_args }}
+
+      - name: vcpkg - Clean cache
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh cache delete --repo ${{ github.repository }} ${{ env.CACHE_KEY }}
+
+      - name: vcpkg - Save cache
+        uses: actions/cache/save@v4
+        with:
+          path: ${{github.workspace}}/vcpkg_cache
+          key: ${{ env.CACHE_KEY }}
+
+      - name: CMake - Build
+        run: >-
+          cmake
+          --build build
+          --config Release
+          --verbose
+
+      - name: CMake - Package
+        working-directory: build
+        run: >-
+          cpack
+          -G ZIP
+          -C Release
+          --verbose
+
+      - name: Upload built package
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ matrix.config.package_name }}"
+          path: build/*.zip
+
+      - name: Upload failed build artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ matrix.config.package_name }}-failure-logs"
+          path: |
+            build
+            !build/*.zip
+            !build/vcpkg_installed
