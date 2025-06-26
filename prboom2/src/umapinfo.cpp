@@ -108,8 +108,8 @@ static char *ParseMultiString(Scanner &scanner, int error)
 		{
 			size_t newlen = strlen(build) + strlen(scanner.string) + 2; // strlen for both the existing text and the new line, plus room for one \n and one \0
 			build = (char*)Z_Realloc(build, newlen); // Prepare the destination memory for the below strcats
-			strcat(build, "\n"); // Replace the existing text's \0 terminator with a \n
-			strcat(build, scanner.string); // Concatenate the new line onto the existing text
+			strncat(build, "\n", newlen); // Replace the existing text's \0 terminator with a \n
+			strncat(build, scanner.string, newlen); // Concatenate the new line onto the existing text
 		}
 	} while (scanner.CheckToken(','));
 	return build;
@@ -415,18 +415,18 @@ int ParseUMapInfo(const unsigned char *buffer, size_t length, umapinfo_errorfunc
 		// Set default level progression here to simplify the checks elsewhere. Doing this lets us skip all normal code for this if nothing has been defined.
 		if (!parsed.nextmap[0] && !parsed.endpic[0])
 		{
-			if (!stricmp(parsed.mapname, "MAP30")) strcpy(parsed.endpic, "$CAST");
-			else if (!stricmp(parsed.mapname, "E1M8"))  strcpy(parsed.endpic, gamemode == retail? "CREDIT" : "HELP2");
-			else if (!stricmp(parsed.mapname, "E2M8"))  strcpy(parsed.endpic, "VICTORY2");
-			else if (!stricmp(parsed.mapname, "E3M8"))  strcpy(parsed.endpic, "$BUNNY");
-			else if (!stricmp(parsed.mapname, "E4M8"))  strcpy(parsed.endpic, "ENDPIC");
-			else if (gamemission == tc_chex && !stricmp(parsed.mapname, "E1M5"))  strcpy(parsed.endpic, "CREDIT");
+			if (!stricmp(parsed.mapname, "MAP30")) strncpy(parsed.endpic, "$CAST", sizeof parsed.endpic);
+			else if (!stricmp(parsed.mapname, "E1M8"))  strncpy(parsed.endpic, gamemode == retail? "CREDIT" : "HELP2", sizeof parsed.endpic);
+			else if (!stricmp(parsed.mapname, "E2M8"))  strncpy(parsed.endpic, "VICTORY2", sizeof parsed.endpic);
+			else if (!stricmp(parsed.mapname, "E3M8"))  strncpy(parsed.endpic, "$BUNNY", sizeof parsed.endpic);
+			else if (!stricmp(parsed.mapname, "E4M8"))  strncpy(parsed.endpic, "ENDPIC", sizeof parsed.endpic);
+			else if (gamemission == tc_chex && !stricmp(parsed.mapname, "E1M5"))  strncpy(parsed.endpic, "CREDIT", sizeof parsed.endpic);
 			else
 			{
 				int ep, map;
 				G_ValidateMapName(parsed.mapname, &ep, &map);
 				map++;
-				sprintf(parsed.nextmap, "%s", VANILLA_MAP_LUMP_NAME(ep, map));
+				snprintf(parsed.nextmap, sizeof parsed.nextmap, "%s", VANILLA_MAP_LUMP_NAME(ep, map));
 			}
 		}
 
