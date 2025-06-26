@@ -23,6 +23,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -604,7 +605,7 @@ static dboolean ReadFileHeader(midi_file_t *file, midimem_t *mf)
      || ntohl(file->header.chunk_header.chunk_size) != 6)
     {
         lprintf (LO_WARN, "ReadFileHeader: Invalid MIDI chunk header! "
-                        "chunk_size=%ld\n",
+                        "chunk_size=%" PRIu32 "\n",
                         ntohl(file->header.chunk_header.chunk_size));
         return false;
     }
