@@ -78,6 +78,9 @@ typedef struct
   fixed_t sy;
 } pspdef_t;
 
+struct player_s;
+struct mobj_s;
+
 enum
 {
     CENTERWEAPON_OFF,
@@ -89,7 +92,6 @@ enum
 
 int P_WeaponPreferred(int w1, int w2);
 
-struct player_s;
 int P_SwitchWeapon(struct player_s *player);
 dboolean P_CheckAmmo(struct player_s *player);
 void P_SubtractAmmo(struct player_s *player, int compat_amt);
@@ -98,43 +100,43 @@ void P_MovePsprites(struct player_s *curplayer);
 void P_DropWeapon(struct player_s *player);
 int P_AmmoPercent(struct player_s *player, int weapon);
 
-void A_Light0();
-void A_WeaponReady();
-void A_Lower();
-void A_Raise();
-void A_Punch();
-void A_ReFire();
-void A_FirePistol();
-void A_Light1();
-void A_FireShotgun();
-void A_Light2();
-void A_FireShotgun2();
-void A_CheckReload();
-void A_OpenShotgun2();
-void A_LoadShotgun2();
-void A_CloseShotgun2();
-void A_FireCGun();
-void A_GunFlash();
-void A_FireMissile();
-void A_Saw();
-void A_FirePlasma();
-void A_BFGsound();
-void A_FireBFG();
-void A_BFGSpray();
-void A_FireOldBFG();
+void A_Light0(struct player_s *player, pspdef_t *psp);
+void A_WeaponReady(struct player_s *player, pspdef_t *psp);
+void A_Lower(struct player_s *player, pspdef_t *psp);
+void A_Raise(struct player_s *player, pspdef_t *psp);
+void A_Punch(struct player_s *player, pspdef_t *psp);
+void A_ReFire(struct player_s *player, pspdef_t *psp);
+void A_FirePistol(struct player_s *player, pspdef_t *psp);
+void A_Light1(struct player_s *player, pspdef_t *psp);
+void A_FireShotgun(struct player_s *player, pspdef_t *psp);
+void A_Light2(struct player_s *player, pspdef_t *psp);
+void A_FireShotgun2(struct player_s *player, pspdef_t *psp);
+void A_CheckReload(struct player_s *player, pspdef_t *psp);
+void A_OpenShotgun2(struct player_s *player, pspdef_t *psp);
+void A_LoadShotgun2(struct player_s *player, pspdef_t *psp);
+void A_CloseShotgun2(struct player_s *player, pspdef_t *psp);
+void A_FireCGun(struct player_s *player, pspdef_t *psp);
+void A_GunFlash(struct player_s *player, pspdef_t *psp);
+void A_FireMissile(struct player_s *player, pspdef_t *psp);
+void A_Saw(struct player_s *player, pspdef_t *psp);
+void A_FirePlasma(struct player_s *player, pspdef_t *psp);
+void A_BFGsound(struct player_s *player, pspdef_t *psp);
+void A_FireBFG(struct player_s *player, pspdef_t *psp);
+void A_BFGSpray(struct mobj_s *mo);
+void A_FireOldBFG(struct player_s *player, pspdef_t *psp);
 
 // [XA] New mbf21 codepointers
 
-void A_WeaponProjectile();
-void A_WeaponBulletAttack();
-void A_WeaponMeleeAttack();
-void A_WeaponSound();
-void A_WeaponAlert();
-void A_WeaponJump();
-void A_ConsumeAmmo();
-void A_CheckAmmo();
-void A_RefireTo();
-void A_GunFlashTo();
+void A_WeaponProjectile(struct player_s *player, pspdef_t *psp);
+void A_WeaponBulletAttack(struct player_s *player, pspdef_t *psp);
+void A_WeaponMeleeAttack(struct player_s *player, pspdef_t *psp);
+void A_WeaponSound(struct player_s *player, pspdef_t *psp);
+void A_WeaponAlert(struct player_s *player, pspdef_t *psp);
+void A_WeaponJump(struct player_s *player, pspdef_t *psp);
+void A_ConsumeAmmo(struct player_s *player, pspdef_t *psp);
+void A_CheckAmmo(struct player_s *player, pspdef_t *psp);
+void A_RefireTo(struct player_s *player, pspdef_t *psp);
+void A_GunFlashTo(struct player_s *player, pspdef_t *psp);
 
 // heretic
 
