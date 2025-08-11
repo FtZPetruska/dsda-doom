@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: Host builds
 
 on: [push, pull_request]
 
@@ -15,8 +15,6 @@ jobs:
         config:
           - name: "MSYS2 UCRT64"
             os: windows-latest
-            build_type: "Release"
-            extra_options: "-G Ninja"
             package_name: "mingw_x64"
             shell: "msys2 {0}"
             msystem: ucrt64
@@ -25,8 +23,7 @@ jobs:
 
           - name: "Linux GCC"
             os: ubuntu-22.04
-            build_type: "Release"
-            extra_options: "-G Ninja -DCMAKE_INSTALL_PREFIX=/usr"
+            cmake_args: '-DCMAKE_INSTALL_PREFIX:PATH=/usr'
             release: true
             package_name: "linux_gcc"
             shell: bash
@@ -34,8 +31,6 @@ jobs:
 
           - name: "macOS arm64 Clang"
             os: macos-latest
-            build_type: "Release"
-            extra_options: "-G Ninja"
             release: true
             package_name: "mac_arm64"
             shell: bash
@@ -43,18 +38,17 @@ jobs:
 
           - name: "macOS x64 Clang"
             os: macos-13
-            build_type: "Release"
-            extra_options: "-G Ninja"
             release: true
             package_name: "mac_x64"
             shell: bash
             artifact-path: build/*.zip
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Clone repository
+        uses: actions/checkout@v4
 
-      - name: Install Dependencies (MSYS2)
-        if: matrix.config.shell == 'msys2 {0}'
+      - name: MSYS2 - Setup dependencies
+        if: ${{ matrix.config.shell == 'msys2 {0}' }}
         uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.config.msystem }}
@@ -74,11 +68,11 @@ jobs:
             ${{ matrix.config.msys-env }}-libsndfile
             ${{ matrix.config.msys-env }}-libzip
 
-      - name: Install Dependencies (Linux)
-        if: runner.os == 'Linux'
+      - name: Linux - Setup dependencies
+        if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
-          sudo apt-get upgrade
+          sudo apt-get upgrade -y
           sudo apt-get install -y \
             gcc \
             ninja-build \
@@ -100,8 +94,8 @@ jobs:
             zipmerge \
             ziptool
 
-      - name: Install Dependencies (macOS)
-        if: runner.os == 'macOS'
+      - name: macOS - Setup dependencies
+        if: ${{ runner.os == 'macOS' }}
         run: |
           brew update
           env HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 \
@@ -121,30 +115,47 @@ jobs:
               libsndfile \
               dylibbundler
 
-      - name: Configure
+      - name: CMake - Configure
         run: >-
-          cmake -S prboom2
+          cmake
+          -S prboom2
           -B build
-          -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
-          -DSTRICT_FIND=ON
-          ${{ matrix.config.extra_options }}
+          -G Ninja
+          -D CMAKE_BUILD_TYPE:STRING=Release
+          -D STRICT_FIND:BOOL=ON
+          ${{ matrix.config.cmake_args }}
 
-      - name: Build
-        run: cmake --build build --config ${{ matrix.config.build_type }}
+      - name: CMake - Build
+        run: >-
+          cmake
+          --build build
+          --config Release
+          --verbose
 
-      - name: Package
+      - name: CMake - Package
+        working-directory: build
         if: ${{ matrix.config.package_name }}
-        run: |
-          cd build
+        run: >-
           cpack
+          -C Release
+          --verbose
 
-      - name: Upload Artifacts
+      - name: Upload built package
         if: ${{ matrix.config.package_name }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.config.package_name }}
           path: ${{ matrix.config.artifact-path }}
           if-no-files-found: error
+
+      - name: Upload failed build artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ matrix.config.package_name }}-failure-logs"
+          path: |
+            build
+            !${{ matrix.config.artifact-path }}
 
       - name: Release
         if: ${{ contains(github.ref, 'tags') && matrix.config.release }}
